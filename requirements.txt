@@ -1,0 +1,4 @@
+matplotlib
+numpy
+# Add other dependencies here
+
