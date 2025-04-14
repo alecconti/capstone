@@ -1,13 +1,6 @@
 """
 Main entry point for the sensor visualization application
 """
-import tkinter as tk
-from tkinter import ttk
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import numpy as np
-import time
-import threading
 import queue
 
 from data_source import DataSource
@@ -21,8 +14,9 @@ def main():
         # Create communication queue for data flow
         data_queue = queue.Queue(maxsize=100)
         
-        # Initialize the data source (simulated for now)
-        data_source = DataSource(data_queue)
+        # Initialize the data source
+        # Mode can be "hardware" for real sensors or "simulation" for testing
+        data_source = DataSource(data_queue, mode="hardware")  # Change to "simulation" for testing
         
         # Create and run the GUI
         app = SensorGUI(data_queue)

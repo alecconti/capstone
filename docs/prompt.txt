@@ -1,0 +1,33 @@
+I'm developing a real-time sensor visualization application in Python called "SensorViz" with these key components:
+
+PROJECT ARCHITECTURE:
+- Sensor data acquisition from 3 hardware sources (Encoder for angle, Strain Gauge for torque, Load Cell for preload)
+- Multi-threaded design for concurrent data acquisition and GUI updates
+- Queue-based communication between components
+- Real-time data synchronization and visualization
+
+DIRECTORY STRUCTURE:
+sensor_visualization/
+├── src/
+│   ├── main.py                      # Application entry point
+│   ├── sensors/                     # Sensor modules
+│   │   ├── sensor_base.py           # Abstract base sensor class
+│   │   ├── encoder.py               # Encoder implementation
+│   │   ├── strain_gauge.py          # Strain gauge implementation
+│   │   ├── load_cell.py             # Load cell implementation
+│   │   └── sensor_manager.py        # Synchronization manager
+│   ├── data/
+│   │   └── data_source.py           # Data acquisition coordinator
+│   └── gui/
+│       └── sensor_gui.py            # Tkinter/Matplotlib visualization
+
+TECHNOLOGIES:
+- Python 3.x with threading for concurrency
+- Tkinter for GUI framework
+- Matplotlib for real-time plotting
+- Hardware communication via appropriate libraries
+
+CURRENT STATUS:
+I've implemented the architecture with simulated data sources and am working on [your current task].
+
+Please help me with [specific question or task you need help with].
