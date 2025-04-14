@@ -3,8 +3,8 @@ Main entry point for the sensor visualization application
 """
 import queue
 
-from data_source import DataSource
-from gui_app import SensorGUI
+from src.data.data_source import DataSource
+from src.gui.sensor_gui import SensorGUI
 
 def main():
     """Main application entry point"""
@@ -16,7 +16,7 @@ def main():
         
         # Initialize the data source
         # Mode can be "hardware" for real sensors or "simulation" for testing
-        data_source = DataSource(data_queue, mode="hardware")  # Change to "simulation" for testing
+        data_source = DataSource(data_queue, mode="simulation")  # Using simulation mode for testing
         
         # Create and run the GUI
         app = SensorGUI(data_queue)

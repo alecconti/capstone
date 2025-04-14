@@ -3,7 +3,8 @@ import threading
 import time
 import queue
 
-from sensor_manager import SensorManager
+from ..sensors.sensor_manager import SensorManager
+
 
 class DataSource:
     """

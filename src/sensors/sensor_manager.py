@@ -1,9 +1,11 @@
-# sensor_manager.py
+# src/sensors/sensor_manager.py
 import time
 import threading
 import queue
 
-from sensors import EncoderSensor, StrainGaugeSensor, LoadCellSensor
+from .encoder import EncoderSensor
+from .strain_gauge import StrainGaugeSensor
+from .load_cell import LoadCellSensor
 
 class SensorManager:
     """
@@ -34,6 +36,8 @@ class SensorManager:
         
         # Last synchronized timestamp
         self.last_sync_time = 0
+        
+    # ... rest of the class implementation stays the same ...
         
     def start(self):
         """Start all sensors and the synchronization thread"""
