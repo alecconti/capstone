@@ -27,6 +27,10 @@ class SensorGUI:
         self.preloads = []
         self.timestamps = []
         
+        # Threshold values (default: None = no threshold)
+        self.torque_threshold = None
+        self.preload_threshold = None
+        
         # Statistics
         self.max_torque = 0
         self.max_preload = 0
@@ -50,12 +54,14 @@ class SensorGUI:
         self.root.rowconfigure(0, weight=0)  # Header
         self.root.rowconfigure(1, weight=1)  # Plots
         self.root.rowconfigure(2, weight=0)  # Controls
-        self.root.rowconfigure(3, weight=0)  # Status
+        self.root.rowconfigure(3, weight=0)  # Thresholds (new row)
+        self.root.rowconfigure(4, weight=0)  # Status
         
         # Initialize GUI components
         self._create_header()
         self._create_plots()
         self._create_controls()
+        self._create_threshold_controls()  # New threshold controls
         self._create_status_bar()
         
         # Animation state
@@ -101,6 +107,12 @@ class SensorGUI:
         
         # Initial empty line for torque plot
         self.torque_line, = self.ax1.plot([], [], 'b-', label="Torque")
+        
+        # Threshold line for torque (initially hidden)
+        self.torque_threshold_line = self.ax1.axhline(
+            y=0, color='r', linestyle='--', linewidth=2, visible=False, label="Threshold"
+        )
+        
         self.ax1.legend()
         
         # Preload vs Angle plot (right)
@@ -112,6 +124,12 @@ class SensorGUI:
         
         # Initial empty line for preload plot
         self.preload_line, = self.ax2.plot([], [], 'r-', label="Preload")
+        
+        # Threshold line for preload (initially hidden)
+        self.preload_threshold_line = self.ax2.axhline(
+            y=0, color='g', linestyle='--', linewidth=2, visible=False, label="Threshold"
+        )
+        
         self.ax2.legend()
         
         # Set tight layout for better spacing
@@ -215,10 +233,125 @@ class SensorGUI:
         self.points_var.trace_add("write", lambda *args: 
             self.points_label.config(text=str(self.points_var.get())))
     
+    def _create_threshold_controls(self):
+        """Create controls for setting thresholds"""
+        threshold_frame = ttk.LabelFrame(self.root, text="Threshold Settings", padding="10")
+        threshold_frame.grid(row=3, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+        
+        # Torque threshold controls
+        torque_frame = ttk.Frame(threshold_frame)
+        torque_frame.pack(side=tk.LEFT, padx=20, fill=tk.X, expand=True)
+        
+        ttk.Label(torque_frame, text="Torque Threshold (Nm):").pack(side=tk.LEFT, padx=5)
+        
+        # Variable to track if torque threshold is enabled
+        self.torque_threshold_enabled = tk.BooleanVar(value=False)
+        self.torque_threshold_checkbtn = ttk.Checkbutton(
+            torque_frame,
+            text="Enable",
+            variable=self.torque_threshold_enabled,
+            command=self._update_torque_threshold
+        )
+        self.torque_threshold_checkbtn.pack(side=tk.LEFT, padx=5)
+        
+        # Entry for torque threshold value
+        self.torque_threshold_var = tk.StringVar(value="80.0")
+        self.torque_threshold_entry = ttk.Entry(
+            torque_frame,
+            textvariable=self.torque_threshold_var,
+            width=8
+        )
+        self.torque_threshold_entry.pack(side=tk.LEFT, padx=5)
+        
+        # Apply button for torque threshold
+        self.torque_apply_btn = ttk.Button(
+            torque_frame,
+            text="Apply",
+            command=self._update_torque_threshold,
+            width=8
+        )
+        self.torque_apply_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Preload threshold controls
+        preload_frame = ttk.Frame(threshold_frame)
+        preload_frame.pack(side=tk.LEFT, padx=20, fill=tk.X, expand=True)
+        
+        ttk.Label(preload_frame, text="Preload Threshold (N):").pack(side=tk.LEFT, padx=5)
+        
+        # Variable to track if preload threshold is enabled
+        self.preload_threshold_enabled = tk.BooleanVar(value=False)
+        self.preload_threshold_checkbtn = ttk.Checkbutton(
+            preload_frame,
+            text="Enable",
+            variable=self.preload_threshold_enabled,
+            command=self._update_preload_threshold
+        )
+        self.preload_threshold_checkbtn.pack(side=tk.LEFT, padx=5)
+        
+        # Entry for preload threshold value
+        self.preload_threshold_var = tk.StringVar(value="250.0")
+        self.preload_threshold_entry = ttk.Entry(
+            preload_frame,
+            textvariable=self.preload_threshold_var,
+            width=8
+        )
+        self.preload_threshold_entry.pack(side=tk.LEFT, padx=5)
+        
+        # Apply button for preload threshold
+        self.preload_apply_btn = ttk.Button(
+            preload_frame,
+            text="Apply",
+            command=self._update_preload_threshold,
+            width=8
+        )
+        self.preload_apply_btn.pack(side=tk.LEFT, padx=5)
+    
+    def _update_torque_threshold(self):
+        """Update the torque threshold based on user input"""
+        if self.torque_threshold_enabled.get():
+            try:
+                threshold_value = float(self.torque_threshold_var.get())
+                self.torque_threshold = threshold_value
+                self.torque_threshold_line.set_ydata([threshold_value, threshold_value])
+                self.torque_threshold_line.set_visible(True)
+                self.status_var.set(f"Torque threshold set to {threshold_value} Nm")
+            except ValueError:
+                self.status_var.set("Invalid torque threshold value")
+                self.torque_threshold_enabled.set(False)
+        else:
+            # Disable threshold
+            self.torque_threshold = None
+            self.torque_threshold_line.set_visible(False)
+            self.status_var.set("Torque threshold disabled")
+        
+        # Redraw canvas
+        self.canvas.draw_idle()
+    
+    def _update_preload_threshold(self):
+        """Update the preload threshold based on user input"""
+        if self.preload_threshold_enabled.get():
+            try:
+                threshold_value = float(self.preload_threshold_var.get())
+                self.preload_threshold = threshold_value
+                self.preload_threshold_line.set_ydata([threshold_value, threshold_value])
+                self.preload_threshold_line.set_visible(True)
+                self.status_var.set(f"Preload threshold set to {threshold_value} N")
+            except ValueError:
+                self.status_var.set("Invalid preload threshold value")
+                self.preload_threshold_enabled.set(False)
+        else:
+            # Disable threshold
+            self.preload_threshold = None
+            self.preload_threshold_line.set_visible(False)
+            self.status_var.set("Preload threshold disabled")
+        
+        # Redraw canvas
+        self.canvas.draw_idle()
+    
     def _create_status_bar(self):
         """Create the status bar with max values display"""
         status_frame = ttk.Frame(self.root, padding="5")
-        status_frame.grid(row=3, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+        status_frame.grid(row=4, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
         
         # Max values display
         stats_frame = ttk.LabelFrame(status_frame, text="Statistics", padding="5")
@@ -300,7 +433,7 @@ class SensorGUI:
         # Update plots with empty data
         self.torque_line.set_data([], [])
         self.preload_line.set_data([], [])
-        self.canvas.draw_idle()
+        self.canvas.draw()
         
         # Reset statistics
         self.max_torque_var.set("0.0 Nm")
@@ -375,6 +508,17 @@ class SensorGUI:
         self.preload_line.set_data(self.angles, self.preloads)
         self.ax2.relim()
         self.ax2.autoscale_view()
+        
+        # Ensure threshold lines are on top and visible based on settings
+        if self.torque_threshold is not None and self.torque_threshold_enabled.get():
+            self.torque_threshold_line.set_visible(True)
+            # Raise threshold line to top to ensure it's visible
+            self.ax1.figure.canvas.draw_idle()
+        
+        if self.preload_threshold is not None and self.preload_threshold_enabled.get():
+            self.preload_threshold_line.set_visible(True)
+            # Raise threshold line to top to ensure it's visible
+            self.ax2.figure.canvas.draw_idle()
         
         # Redraw the canvas
         self.canvas.draw_idle()

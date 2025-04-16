@@ -4,7 +4,7 @@ from src.sensors.sensor_base import SensorBase
 class EncoderSensor(SensorBase):
     """Reads angle data from a hardware encoder"""
     
-    def __init__(self, port=None, update_rate=0.01):
+    def __init__(self, port=None, update_rate=0.1):
         super().__init__(name="Encoder", update_rate=update_rate)
         self.port = port
         # Add specific encoder configuration here
