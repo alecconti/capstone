@@ -1,6 +1,7 @@
 # src/gui/sensor_gui.py
 import tkinter as tk
 from tkinter import ttk
+from src.alerts.alert_manager import AlertManager
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import queue
@@ -63,6 +64,7 @@ class SensorGUI:
         self._create_controls()
         self._create_threshold_controls()  # New threshold controls
         self._create_status_bar()
+        self.alert_manager = AlertManager(self.root)
         
         # Animation state
         self.running = False
@@ -451,6 +453,8 @@ class SensorGUI:
     def on_closing(self):
         """Handle window close event"""
         self.stop_visualization()
+        if hasattr(self, 'alert_manager'):
+            self.alert_manager.cleanup()
         self.root.destroy()
     
     def _animation_loop(self):
@@ -514,11 +518,33 @@ class SensorGUI:
             self.torque_threshold_line.set_visible(True)
             # Raise threshold line to top to ensure it's visible
             self.ax1.figure.canvas.draw_idle()
+            
+            # Check for torque threshold breach
+            if self.torques and self.torques[-1] > self.torque_threshold:
+                self.alert_manager.alert(
+                    "torque_high",
+                    f"Warning: Torque exceeds threshold!\nCurrent: {self.torques[-1]:.1f} Nm\nThreshold: {self.torque_threshold:.1f} Nm",
+                    sound=True,
+                    popup=True
+                )
+            else:
+                self.alert_manager.dismiss_alert("torque_high")
         
         if self.preload_threshold is not None and self.preload_threshold_enabled.get():
             self.preload_threshold_line.set_visible(True)
             # Raise threshold line to top to ensure it's visible
             self.ax2.figure.canvas.draw_idle()
+            
+            # Check for preload threshold breach
+            if self.preloads and self.preloads[-1] > self.preload_threshold:
+                self.alert_manager.alert(
+                    "preload_high",
+                    f"Warning: Preload exceeds threshold!\nCurrent: {self.preloads[-1]:.1f} N\nThreshold: {self.preload_threshold:.1f} N",
+                    sound=True,
+                    popup=False  # Only buzzer for preload, no popup
+                )
+            else:
+                self.alert_manager.dismiss_alert("preload_high")
         
         # Redraw the canvas
         self.canvas.draw_idle()
@@ -533,7 +559,7 @@ class SensorGUI:
         
         # Update count for debugging
         self.update_count += 1
-    
+
     def _schedule_update(self):
         """Schedule the next UI update if still running"""
         if self.running:
